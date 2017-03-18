@@ -1,12 +1,12 @@
 const mongoose = require('mongoose');
 
 const Message = mongoose.model('Message', {
-    userOneId: {
-        type: mongoose.Schema.Types.ObjectId,
-        require: true
+    sender: {
+        type: String,
+        required: true
     },
-    userTwoId: {
-        type: mongoose.Schema.Types.ObjectId,
+    receiver: {
+        type: String,
         required: true
     },
     content: {

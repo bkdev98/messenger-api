@@ -16,10 +16,10 @@ const port = process.env.PORT || 3000;
 app.use(bodyParser.json());
 
 app.get('/api', authenticate, (req, res) => {
-    User.find().then(users => {
+    User.find({}).nin('_id', req.user._id).then(users => {
         res.send({
             title: 'Messenger App | Home',
-            users
+            userList: users
         });
     });
 });
@@ -27,45 +27,65 @@ app.get('/api', authenticate, (req, res) => {
 app.get('/api/messenger/:id', authenticate, (req, res) => {
     const userOneId = req.user._id;
     const userTwoId = ObjectId(req.params.id);
+    var userList = [];
+    var currentUser = undefined;
 
-    Conversation.findOne({participants: { $all: [userOneId, userTwoId] }})
-        .then((conversation) => {
-            if (!conversation) {
-                return res.send({
-                    title: 'Messenger App | Start A Conversation',
-                    messages: []
-                });
-            }
+    User.findById(req.params.id).then((user) => {
+        currentUser = user;
+    }).catch((e) => {
+        res.status(404).send();
+    });
+    User.find({}).nin('_id', req.user._id).then(users => {
+        userList = users;
 
-            Message.find({conversationId: conversation._id})
-                .then(messages => {
-                    res.send({
-                        title: 'Messenger App | Continue A Conversation',
-                        messages
+        Conversation.findOne({participants: { $all: [userOneId, userTwoId] }})
+            .then((conversation) => {
+                if (!conversation) {
+                    return res.send({
+                        title: 'Messenger App | Start A Conversation',
+                        userList,
+                        messages: [],
+                        currentUser
                     });
-                })
-        }, (e) => {
-            res.status(400).send();
-        });
+                }
+                Message.find({conversationId: conversation._id})
+                    .then(messages => {
+                        return res.send({
+                            title: 'Messenger App | Continue A Conversation',
+                            userList,
+                            messages,
+                            currentUser
+                        });
+                    })
+            });
+    }).catch((e) => {
+        res.status(400).send();
+    });
 });
 
 app.post('/api/messenger/:id', authenticate, (req, res) => {
     const userOneId = req.user._id;
     const userTwoId = ObjectId(req.params.id);
+    const sender = req.user.username;
+    var receiver = null;
 
-    console.log(userOneId, userTwoId);
+    User.findById(req.params.id).then((user) => {
+        receiver = user.username;
+    }).catch((e) => {
+        res.status(404).send();
+    });
 
     Conversation.findOne({participants: { $all: [userOneId, userTwoId] }})
-        .then((conversation) => {
-            if (!conversation) {
+        .then((conversation) => {            
+            if (!conversation) {                
                 const conversation = new Conversation({
                     participants: [userOneId, userTwoId]
                 });
 
                 conversation.save().then((conv) => {
                     const message = new Message({
-                        userOneId,
-                        userTwoId,
+                        sender,
+                        receiver,
                         content: req.body.content,
                         createdAt: new Date().getTime(),
                         conversationId: conv._id
@@ -73,15 +93,13 @@ app.post('/api/messenger/:id', authenticate, (req, res) => {
 
                     message.save().then((mess) => {
                         res.send(mess);
-                    }, (e) => {
-                        res.status(400).send();
                     });
 
                 });
             } else {
                 const message = new Message({
-                    userOneId,
-                    userTwoId,
+                    sender,
+                    receiver,
                     content: req.body.content,
                     createdAt: new Date().getTime(),
                     conversationId: conversation._id
@@ -89,13 +107,11 @@ app.post('/api/messenger/:id', authenticate, (req, res) => {
 
                 message.save().then((mess) => {
                     res.send(mess);
-                }, (e) => {
-                    res.status(400).send();
                 });
             }
 
 
-        }, (e) => {
+        }).catch((e) => {
             res.status(400).send();
         });
 });
