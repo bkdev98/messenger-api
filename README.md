@@ -3,6 +3,7 @@ RestfulAPI for Messenger app using NodeJS and MongoDB.
 
 ### Installation
   ```
+  //  Required: Having a mongo daemon process running
   git clone https://github.com/bkdev98/messenger-api
   cd messenger-api
   npm install
