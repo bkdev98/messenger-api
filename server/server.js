@@ -28,10 +28,11 @@ app.get('/api/messenger/:id', authenticate, (req, res) => {
     const userOneId = req.user._id;
     const userTwoId = ObjectId(req.params.id);
     var userList = [];
-    var currentUser = undefined;
+    var targetUser = undefined;
+    currentUser = req.user;
 
     User.findById(req.params.id).then((user) => {
-        currentUser = user;
+        targetUser = user;
     }).catch((e) => {
         res.status(404).send();
     });
@@ -45,7 +46,8 @@ app.get('/api/messenger/:id', authenticate, (req, res) => {
                         title: 'Messenger App | Start A Conversation',
                         userList,
                         messages: [],
-                        currentUser
+                        currentUser,
+                        targetUser
                     });
                 }
                 Message.find({conversationId: conversation._id})
@@ -54,7 +56,8 @@ app.get('/api/messenger/:id', authenticate, (req, res) => {
                             title: 'Messenger App | Continue A Conversation',
                             userList,
                             messages,
-                            currentUser
+                            currentUser,
+                            targetUser
                         });
                     })
             });
@@ -69,50 +72,45 @@ app.post('/api/messenger/:id', authenticate, (req, res) => {
     const sender = req.user.username;
     var receiver = null;
 
-    User.findById(req.params.id).then((user) => {
-        receiver = user.username;
-    }).catch((e) => {
-        res.status(404).send();
-    });
+    User.findById(req.params.id)
+        .then((user) => {
+            receiver = user.username;
 
-    Conversation.findOne({participants: { $all: [userOneId, userTwoId] }})
-        .then((conversation) => {            
-            if (!conversation) {                
-                const conversation = new Conversation({
-                    participants: [userOneId, userTwoId]
+            Conversation.findOne({participants: { $all: [userOneId, userTwoId] }})
+                .then((conversation) => {            
+                    if (!conversation) {                
+                        const conversation = new Conversation({
+                            participants: [userOneId, userTwoId]
+                        });
+                        conversation.save().then((conv) => {
+                            const message = new Message({
+                                sender,
+                                receiver,
+                                content: req.body.content,
+                                createdAt: new Date().getTime(),
+                                conversationId: conv._id
+                            });
+                            message.save().then((mess) => {
+                                res.send(mess);
+                            });
+                        });
+                    } else {
+                        const message = new Message({
+                            sender,
+                            receiver,
+                            content: req.body.content,
+                            createdAt: new Date().getTime(),
+                            conversationId: conversation._id
+                        });
+                        message.save().then((mess) => {
+                            res.send(mess);
+                        });
+                    }
+                }).catch((e) => {
+                    res.status(400).send();
                 });
-
-                conversation.save().then((conv) => {
-                    const message = new Message({
-                        sender,
-                        receiver,
-                        content: req.body.content,
-                        createdAt: new Date().getTime(),
-                        conversationId: conv._id
-                    });
-
-                    message.save().then((mess) => {
-                        res.send(mess);
-                    });
-
-                });
-            } else {
-                const message = new Message({
-                    sender,
-                    receiver,
-                    content: req.body.content,
-                    createdAt: new Date().getTime(),
-                    conversationId: conversation._id
-                });
-
-                message.save().then((mess) => {
-                    res.send(mess);
-                });
-            }
-
-
         }).catch((e) => {
-            res.status(400).send();
+            res.status(404).send();
         });
 });
 
