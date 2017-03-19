@@ -20,7 +20,7 @@ RestfulAPI for Messenger app using NodeJS and MongoDB.
   **Example ajax POST login request to API**
   ![Image](https://github.com/bkdev98/messenger-web-client/blob/master/Screen%20Shot%202017-03-19%20at%2022.51.38.png)
 ### Web Client Example
-  [http://messenger.bkdev.me/](https://messenger.bkdev.me/)
+  [http://messenger.bkdev.me/](http://messenger.bkdev.me/)
 
   ![Image](https://github.com/bkdev98/messenger-web-client/blob/master/Screen%20Shot%202017-03-19%20at%2018.16.55.png)
 ### Todo
