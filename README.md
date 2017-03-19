@@ -6,6 +6,19 @@ RestfulAPI for Messenger app using NodeJS and MongoDB.
   //  Required: Having a mongo daemon process running
   git clone https://github.com/bkdev98/messenger-api
   cd messenger-api
+  Create config.json file in server/config/ with content like this:
+  {
+      "test": {
+          "PORT": 3000,
+          "MONGODB_URI": "mongodb://localhost:27017/MessengerAppTest",
+          "JWT_SECRET": "somerandomstring"
+      },
+      "development": {
+          "PORT": 3000,
+          "MONGODB_URI": "mongodb://localhost:27017/MessengerApp",
+          "JWT_SECRET": "somerandomstring"
+      }
+  }
   npm install
   npm start
   ```
